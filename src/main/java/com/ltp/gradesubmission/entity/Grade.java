@@ -35,4 +35,8 @@ public class Grade {
     @JoinColumn(name = "student_id", referencedColumnName = "id")
     private Student student;
 
+    @ManyToOne(optional = false) // runtime; before contacting ther database 
+    @JoinColumn(name = "course_id", referencedColumnName = "id")
+    private Course course;
+
 }

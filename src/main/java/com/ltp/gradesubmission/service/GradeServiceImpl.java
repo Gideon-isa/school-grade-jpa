@@ -1,12 +1,16 @@
 package com.ltp.gradesubmission.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.ltp.gradesubmission.entity.Course;
 import com.ltp.gradesubmission.entity.Grade;
 import com.ltp.gradesubmission.entity.Student;
+import com.ltp.gradesubmission.exception.GradeNotFoundException;
+import com.ltp.gradesubmission.repository.CourseRepository;
 import com.ltp.gradesubmission.repository.GradeRepository;
 import com.ltp.gradesubmission.repository.StudentRepository;
 
@@ -18,30 +22,50 @@ public class GradeServiceImpl implements GradeService {
 
     
     GradeRepository gradeRepository;
-
     StudentRepository studentRepository;
+    CourseRepository courseRepository;
     
     @Override
     public Grade getGrade(Long studentId, Long courseId) {
-        return gradeRepository.findByStudentId(studentId);
+        Optional<Grade> grade = gradeRepository.findByStudentIdAndCourseId(studentId, courseId);
+        if (grade.isPresent()) {
+            return grade.get();
+        }else{
+            throw new GradeNotFoundException(studentId, courseId);
+        }
+        
     }
 
     @Override
     public Grade saveGrade(Grade grade, Long studentId, Long courseId) {
         // need to assign the grade to a student before saving
         Student student = studentRepository.findById(studentId).get();
+        Course course = courseRepository.findById(courseId).get();
         grade.setStudent(student);
+        grade.setCourse(course);
         return gradeRepository.save(grade);
     }
  
     @Override
     public Grade updateGrade(String score, Long studentId, Long courseId) {
-        return null;
+        Optional<Grade> grade = gradeRepository.findByStudentIdAndCourseId(studentId, courseId);
+        if (grade.isPresent()) {
+            Grade unwrappedGrade = grade.get();
+            unwrappedGrade.setScore(score);
+            // no new grade will be created by springboot
+            // because it already exits. instead it will be updated
+            return gradeRepository.save(unwrappedGrade); 
+        }else {
+            throw new GradeNotFoundException(studentId, courseId);
+        }
+        
+        
+        
     }
 
     @Override
     public void deleteGrade(Long studentId, Long courseId) {
-        
+        gradeRepository.deleteByStudentIdAndCourseId(studentId, courseId);
     }
 
     @Override
